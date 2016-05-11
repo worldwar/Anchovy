@@ -1,5 +1,7 @@
 package tw.zhuran.anchovy.types;
 
+import com.google.common.primitives.Ints;
+import com.google.common.primitives.Longs;
 import org.junit.Test;
 
 import java.math.BigInteger;
@@ -77,5 +79,41 @@ public class TypesTest {
 
         byte[] ulong0Bytes = new byte[] {(byte)0x44};
         assertThat(Types.decode(ulong0Bytes), is((Object)0));
+    }
+
+    @Test
+    public void shouldDecodeByteType() {
+        byte[] byteBytes = new byte[]{0x51, (byte)0x99};
+        assertThat(Types.decode(byteBytes), is((Object)(byte)0x99));
+    }
+
+    @Test
+    public void shouldDecodeShortType() {
+        byte[] shortBytes = new byte[]{0x61, (byte)0x99, (byte)0x22};
+        assertThat(Types.decode(shortBytes), is((Object)(short)0x9922));
+    }
+
+    @Test
+    public void shouldDecodeIntType() {
+        byte[] intBytes = new byte[]{0x71, (byte)0xdd, (byte)0x11, (byte)0x98, (byte)0x0C};
+        assertThat(Types.decode(intBytes), is((Object)(int)0xdd11980c));
+    }
+
+    @Test
+    public void shouldDecodeLongType() {
+        byte[] longBytes = new byte[]{(byte)0x81, (byte)0xff, (byte)0xcc, (byte)0xdd, (byte)0x99, (byte)0x38, (byte)0x91, (byte)0x05, (byte)0x55};
+        assertThat(Types.decode(longBytes), is((Object)(long)0xffccdd9938910555L));
+    }
+
+    @Test
+    public void shouldDecodeFloatType() {
+        byte[] floatBytes = new byte[]{(byte)0x72, (byte)0xa0, (byte)0xb1, (byte)0xc2, (byte)0xd3};
+        assertThat(Types.decode(floatBytes), is((Object)Float.intBitsToFloat(Ints.fromByteArray(Lists.copy(floatBytes, 1, 4)))));
+    }
+
+    @Test
+    public void shouldDecodeDoubleType() {
+        byte[] doubleBytes = new byte[]{(byte)0x82, (byte)0xa0, (byte)0xb1, (byte)0xc2, (byte)0xd3, (byte)0xe4, (byte)0xf5, (byte)0x06, (byte)0x17};
+        assertThat(Types.decode(doubleBytes), is((Object) Double.longBitsToDouble((Longs.fromByteArray(Lists.copy(doubleBytes, 1, 8))))));
     }
 }
