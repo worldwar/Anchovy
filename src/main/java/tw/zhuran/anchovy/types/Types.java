@@ -3,6 +3,8 @@ package tw.zhuran.anchovy.types;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Shorts;
 
+import java.math.BigInteger;
+
 public class Types {
     public static final byte FORMAT_CODE_NULL = 0x40;
     public static final byte FORMAT_CODE_BOOLEAN = 0x56;
@@ -13,6 +15,9 @@ public class Types {
     public static final byte FORMAT_CODE_UINT = 0x70;
     public static final byte FORMAT_CODE_SMALLUINT = 0x52;
     public static final byte FORMAT_CODE_UINT0 = 0x43;
+    public static final byte FORMAT_CODE_ULONG = (byte)0x80;
+    public static final byte FORMAT_CODE_SMALLULONG = (byte)0x53;
+    public static final byte FORMAT_CODE_ULONG0 = (byte)0x44;
     public static final byte PAYLOAD_TRUE = 0x01;
     public static final byte PAYLOAD_FALSE = 0x00;
 
@@ -34,6 +39,9 @@ public class Types {
             case FORMAT_CODE_UINT: return Integer.toUnsignedLong(Ints.fromBytes(bytes[1], bytes[2], bytes[3], bytes[4]));
             case FORMAT_CODE_SMALLUINT: return Byte.toUnsignedInt(bytes[1]);
             case FORMAT_CODE_UINT0: return 0;
+            case FORMAT_CODE_ULONG: return new BigInteger(1, Lists.copy(bytes, 1, 8));
+            case FORMAT_CODE_SMALLULONG: return Byte.toUnsignedInt(bytes[1]);
+            case FORMAT_CODE_ULONG0: return 0;
             default: return null;
         }
     }

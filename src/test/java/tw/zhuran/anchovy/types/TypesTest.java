@@ -2,6 +2,8 @@ package tw.zhuran.anchovy.types;
 
 import org.junit.Test;
 
+import java.math.BigInteger;
+
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -59,5 +61,21 @@ public class TypesTest {
 
         byte[] uint0Bytes = new byte[]{0x43};
         assertThat(Types.decode(uint0Bytes), is((Object)0));
+    }
+
+    @Test
+    public void shouldDecodeUlongType() {
+        byte[] ulongBytes = new byte[] {(byte)0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+        assertThat(Types.decode(ulongBytes), is((Object)new BigInteger(new byte[]{0x00})));
+        byte[] ulongBytes4096 = new byte[] {(byte)0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00};
+        assertThat(((BigInteger)Types.decode(ulongBytes4096)).intValue(), is(4096));
+        byte[] ulongBytes11150031900141442680 = new byte[] {(byte)0x80, (byte)0x9a, (byte)0xbc, (byte)0xde, (byte)0xf0, (byte)0x12, 0x34, 0x56, 0x78};
+        assertThat(Types.decode(ulongBytes11150031900141442680), is((Object)new BigInteger("11150031900141442680")));
+
+        byte[] smallulongBytes = new byte[] {(byte)0x53, (byte)0x9a};
+        assertThat(Types.decode(smallulongBytes), is((Object)154));
+
+        byte[] ulong0Bytes = new byte[] {(byte)0x44};
+        assertThat(Types.decode(ulong0Bytes), is((Object)0));
     }
 }
