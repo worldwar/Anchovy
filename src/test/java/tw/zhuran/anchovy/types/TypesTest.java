@@ -44,4 +44,20 @@ public class TypesTest {
         byte[] ushortBytes45678 = new byte[]{0x60, (byte)0xB2, (byte)0x6E};
         assertThat(Types.decode(ushortBytes45678), is((Object)Integer.valueOf(45678)));
     }
+
+    @Test
+    public void shouldDecodeUintType() {
+        byte[] uintBytes = new byte[]{0x70, 0x00, 0x00, 0x00, 0x00};
+        assertThat(Types.decode(uintBytes), is((Object)0L));
+        byte[] uintBytes15 = new byte[]{0x70, 0x00, 0x00, 0x00, 0x0F};
+        assertThat(Types.decode(uintBytes15), is((Object)15L));
+        byte[] uintBytes2882400018 = new byte[]{0x70, (byte)0xAB, (byte)0xCD, (byte)0xEF, 0x12};
+        assertThat(Types.decode(uintBytes2882400018), is((Object)2882400018L));
+
+        byte[] smallUnitBytes = new byte[]{0x52, (byte)0xCD};
+        assertThat(Types.decode(smallUnitBytes), is((Object)205));
+
+        byte[] uint0Bytes = new byte[]{0x43};
+        assertThat(Types.decode(uint0Bytes), is((Object)0));
+    }
 }

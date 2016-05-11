@@ -1,5 +1,6 @@
 package tw.zhuran.anchovy.types;
 
+import com.google.common.primitives.Ints;
 import com.google.common.primitives.Shorts;
 
 public class Types {
@@ -9,6 +10,9 @@ public class Types {
     public static final byte FORMAT_CODE_FALSE = 0x42;
     public static final byte FORMAT_CODE_UBYTE = 0x50;
     public static final byte FORMAT_CODE_USHORT = 0x60;
+    public static final byte FORMAT_CODE_UINT = 0x70;
+    public static final byte FORMAT_CODE_SMALLUINT = 0x52;
+    public static final byte FORMAT_CODE_UINT0 = 0x43;
     public static final byte PAYLOAD_TRUE = 0x01;
     public static final byte PAYLOAD_FALSE = 0x00;
 
@@ -27,6 +31,9 @@ public class Types {
             case FORMAT_CODE_FALSE: return false;
             case FORMAT_CODE_UBYTE: return Byte.toUnsignedInt(bytes[1]);
             case FORMAT_CODE_USHORT: return Short.toUnsignedInt(Shorts.fromBytes(bytes[1], bytes[2]));
+            case FORMAT_CODE_UINT: return Integer.toUnsignedLong(Ints.fromBytes(bytes[1], bytes[2], bytes[3], bytes[4]));
+            case FORMAT_CODE_SMALLUINT: return Byte.toUnsignedInt(bytes[1]);
+            case FORMAT_CODE_UINT0: return 0;
             default: return null;
         }
     }
