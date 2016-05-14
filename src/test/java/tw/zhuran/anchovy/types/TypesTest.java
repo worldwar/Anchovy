@@ -5,6 +5,7 @@ import com.google.common.primitives.Longs;
 import org.junit.Test;
 
 import java.math.BigInteger;
+import java.time.*;
 
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
@@ -115,5 +116,21 @@ public class TypesTest {
     public void shouldDecodeDoubleType() {
         byte[] doubleBytes = new byte[]{(byte)0x82, (byte)0xa0, (byte)0xb1, (byte)0xc2, (byte)0xd3, (byte)0xe4, (byte)0xf5, (byte)0x06, (byte)0x17};
         assertThat(Types.decode(doubleBytes), is((Object) Double.longBitsToDouble((Longs.fromByteArray(Lists.copy(doubleBytes, 1, 8))))));
+    }
+
+    @Test
+    public void shouldDecodeCharType() {
+        byte[] charBytes = new byte[]{(byte)0x73, (byte)0x00, (byte)0x00, (byte)0x67, (byte)0x31};
+        assertThat(Types.decode(charBytes), is((Object) "朱"));
+    }
+
+    @Test
+    public void shouldDecodeTimestampType() {
+        byte[] timestampBytes = new byte[]{(byte)0x83, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00};
+        LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(0L), ZoneId.of("UTC"));
+        assertThat(Types.decode(timestampBytes), is((Object) localDateTime));
+        timestampBytes = new byte[]{(byte)0x83, (byte)0x00, (byte)0x00, (byte)0x01, (byte)0x54, (byte)0xa8, (byte)0xad, (byte)0xa5, (byte)0x68};
+        localDateTime = LocalDateTime.of(2016, 5, 13, 5, 53, 53);
+        assertThat(Types.decode(timestampBytes), is((Object)localDateTime));
     }
 }
