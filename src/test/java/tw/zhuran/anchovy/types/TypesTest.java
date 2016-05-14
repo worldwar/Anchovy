@@ -6,9 +6,11 @@ import org.junit.Test;
 
 import java.math.BigInteger;
 import java.time.*;
+import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertThat;
 
 public class TypesTest {
@@ -132,5 +134,40 @@ public class TypesTest {
         timestampBytes = new byte[]{(byte)0x83, (byte)0x00, (byte)0x00, (byte)0x01, (byte)0x54, (byte)0xa8, (byte)0xad, (byte)0xa5, (byte)0x68};
         localDateTime = LocalDateTime.of(2016, 5, 13, 5, 53, 53);
         assertThat(Types.decode(timestampBytes), is((Object)localDateTime));
+    }
+
+    @Test
+    public void shouldDecodeUUIDType() {
+        UUID uuid = UUID.fromString("5d4f0b64-76e6-4fc3-9dbb-a33387f9a105");
+        byte[] uuidBytes = new byte[]{(byte)0x98, (byte)0x5d, (byte)0x4f, (byte)0x0b, (byte)0x64,
+                (byte)0x76, (byte)0xe6, (byte)0x4f, (byte)0xc3,
+                (byte)0x9d, (byte)0xbb, (byte)0xa3, (byte)0x33,
+                (byte)0x87, (byte)0xf9, (byte)0xa1, (byte)0x05
+        };
+        assertThat(Types.decode(uuidBytes), is((Object)uuid));
+    }
+
+    @Test
+    public void shouldDecodeBinaryType() {
+        byte[] binaryBytes = new byte[]{(byte) 0xa0, (byte)0x05, (byte)0x01, (byte)0x02, (byte)0x03, (byte)0x04, (byte)0x05};
+        assertArrayEquals((byte[])Types.decode(binaryBytes), Lists.copy(binaryBytes, 2, 5));
+        binaryBytes = new byte[]{(byte) 0xb0, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x05, (byte)0x01, (byte)0x02, (byte)0x03, (byte)0x04, (byte)0x05};
+        assertArrayEquals((byte[])Types.decode(binaryBytes), Lists.copy(binaryBytes, 5, 5));
+    }
+
+    @Test
+    public void shouldDecodeStringType() {
+        byte[] stringBytes = new byte[]{(byte) 0xa1, (byte)0x06, (byte)0xE6, (byte)0x9C, (byte)0xB1, (byte)0xE7, (byte)0x84, (byte)0xB6};
+        assertThat(Types.decode(stringBytes), is((Object) "朱然"));
+        stringBytes = new byte[]{(byte) 0xb1, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x06, (byte)0xE6, (byte)0x9C, (byte)0xB1, (byte)0xE7, (byte)0x84, (byte)0xB6};
+        assertThat(Types.decode(stringBytes), is((Object) "朱然"));
+    }
+
+    @Test
+    public void shouldDecodeSymbolType() {
+        byte[] symbolBytes = new byte[]{(byte) 0xa3, (byte)0x04, (byte)'f', (byte)'i', (byte)'s', (byte)'h'};
+        assertThat(Types.decode(symbolBytes), is((Object) "fish"));
+        symbolBytes = new byte[]{(byte) 0xb3, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x04, (byte)'f', (byte)'i', (byte)'s', (byte)'h'};
+        assertThat(Types.decode(symbolBytes), is((Object) "fish"));
     }
 }
