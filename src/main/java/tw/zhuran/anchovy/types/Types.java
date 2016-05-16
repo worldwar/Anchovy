@@ -1,10 +1,10 @@
 package tw.zhuran.anchovy.types;
 
 import com.google.common.base.Charsets;
-import com.google.common.primitives.Ints;
-import com.google.common.primitives.Longs;
-import com.google.common.primitives.Shorts;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.time.Instant;
@@ -49,57 +49,63 @@ public class Types {
     public static final ZoneId ZONE_ID_UTC = ZoneId.of("UTC");
 
     public static Object decode(byte[] bytes) {
-        assert bytes != null : "input of decode should not be null!";
-        assert bytes.length != 0 : "input of decode should not be empty!";
+        try {
+            return decode(new ByteArrayInputStream(bytes));
+        } catch (IOException e) {
+            return null;
+        }
+    }
 
-        switch (bytes[0]) {
+    public static Object decode(InputStream stream) throws IOException {
+        assert stream != null : "input of decode should not be null!";
+        assert stream.available() != 0 : "input of decode should not be empty!";
+
+        switch (Streams.read(stream)) {
             case FORMAT_CODE_NULL: return null;
             case FORMAT_CODE_BOOLEAN:
-                switch (bytes[1]) {
+                switch (stream.read()) {
                     case PAYLOAD_FALSE: return false;
                     case PAYLOAD_TRUE: return true;
                 }
             case FORMAT_CODE_TRUE: return true;
             case FORMAT_CODE_FALSE: return false;
-            case FORMAT_CODE_UBYTE: return Byte.toUnsignedInt(bytes[1]);
-            case FORMAT_CODE_USHORT: return Short.toUnsignedInt(Shorts.fromBytes(bytes[1], bytes[2]));
-            case FORMAT_CODE_UINT: return Integer.toUnsignedLong(Ints.fromBytes(bytes[1], bytes[2], bytes[3], bytes[4]));
-            case FORMAT_CODE_SMALLUINT: return Byte.toUnsignedInt(bytes[1]);
+            case FORMAT_CODE_UBYTE: return Byte.toUnsignedInt(Streams.read(stream));
+            case FORMAT_CODE_USHORT: return Short.toUnsignedInt(Streams.readShort(stream));
+            case FORMAT_CODE_UINT: return Integer.toUnsignedLong(Streams.readInt(stream));
+            case FORMAT_CODE_SMALLUINT: return Byte.toUnsignedInt(Streams.read(stream));
             case FORMAT_CODE_UINT0: return 0;
-            case FORMAT_CODE_ULONG: return new BigInteger(1, Lists.copy(bytes, 1, 8));
-            case FORMAT_CODE_SMALLULONG: return Byte.toUnsignedInt(bytes[1]);
+            case FORMAT_CODE_ULONG: return new BigInteger(1, Streams.read(stream, 8));
+            case FORMAT_CODE_SMALLULONG: return Byte.toUnsignedInt(Streams.read(stream));
             case FORMAT_CODE_ULONG0: return 0;
-            case FORMAT_CODE_BYTE: return bytes[1];
-            case FORMAT_CODE_SHORT: return Shorts.fromBytes(bytes[1], bytes[2]);
-            case FORMAT_CODE_INT: return Ints.fromBytes(bytes[1], bytes[2], bytes[3], bytes[4]);
-            case FORMAT_CODE_LONG: return Longs.fromByteArray(Lists.copy(bytes, 1, 8));
-            case FORMAT_CODE_FLOAT: return Float.intBitsToFloat(Ints.fromByteArray(Lists.copy(bytes, 1, 4)));
-            case FORMAT_CODE_DOUBLE: return Double.longBitsToDouble(Longs.fromByteArray(Lists.copy(bytes, 1, 8)));
-            case FORMAT_CODE_CHAR: return new String(Lists.copy(bytes, 1, 4), CHARSET_UTF_32BE);
+            case FORMAT_CODE_BYTE: return Streams.read(stream);
+            case FORMAT_CODE_SHORT: return Streams.readShort(stream);
+            case FORMAT_CODE_INT: return Streams.readInt(stream);
+            case FORMAT_CODE_LONG: return Streams.readLong(stream);
+            case FORMAT_CODE_FLOAT: return Float.intBitsToFloat(Streams.readInt(stream));
+            case FORMAT_CODE_DOUBLE: return Double.longBitsToDouble(Streams.readLong(stream));
+            case FORMAT_CODE_CHAR: return new String(Streams.read(stream, 4), CHARSET_UTF_32BE);
             case FORMAT_CODE_TIMESTAMP:
-                long epochMilli = Longs.fromByteArray(Lists.copy(bytes, 1, 8));
+                long epochMilli = Streams.readLong(stream);
                 return LocalDateTime.ofInstant(Instant.ofEpochMilli(epochMilli), ZONE_ID_UTC);
-            case FORMAT_CODE_UUID: return new UUID(
-                    Longs.fromByteArray(Lists.copy(bytes, 1, 8)),
-                    Longs.fromByteArray(Lists.copy(bytes, 9, 8)));
+            case FORMAT_CODE_UUID: return new UUID(Streams.readLong(stream), Streams.readLong(stream));
             case FORMAT_CODE_VBIN8:
-                int length = Byte.toUnsignedInt(bytes[1]);
-                return Lists.copy(bytes, 2, length);
+                int length = Byte.toUnsignedInt(Streams.read(stream));
+                return Streams.read(stream, length);
             case FORMAT_CODE_VBIN32:
-                long l = Integer.toUnsignedLong(Ints.fromByteArray(Lists.copy(bytes, 1, 5)));
-                return Lists.copy(bytes, 5, (int)l);
+                long l = Integer.toUnsignedLong(Streams.readInt(stream));
+                return Streams.read(stream, (int)l);
             case FORMAT_CODE_STR8UTF8:
-                int stringLength = Byte.toUnsignedInt(bytes[1]);
-                return new String(Lists.copy(bytes, 2, stringLength), CHARSET_UTF_8);
+                int stringLength = Byte.toUnsignedInt(Streams.read(stream));
+                return new String(Streams.read(stream, stringLength), CHARSET_UTF_8);
             case FORMAT_CODE_STR32UTF8:
-                long longStringLength = Integer.toUnsignedLong(Ints.fromByteArray(Lists.copy(bytes, 1, 5)));
-                return new String(Lists.copy(bytes, 5, (int)longStringLength), CHARSET_UTF_8);
+                long longStringLength = Integer.toUnsignedLong(Streams.readInt(stream));
+                return new String(Streams.read(stream, (int)longStringLength), CHARSET_UTF_8);
             case FORMAT_CODE_SYM8:
-                int symbolLength = Byte.toUnsignedInt(bytes[1]);
-                return new String(Lists.copy(bytes, 2, symbolLength), CHARSET_US_ASCII);
+                int symbolLength = Byte.toUnsignedInt(Streams.read(stream));
+                return new String(Streams.read(stream, symbolLength), CHARSET_US_ASCII);
             case FORMAT_CODE_SYM32:
-                long longSymbolLength = Integer.toUnsignedLong(Ints.fromByteArray(Lists.copy(bytes, 1, 5)));
-                return new String(Lists.copy(bytes, 5, (int)longSymbolLength), CHARSET_US_ASCII);
+                long longSymbolLength = Integer.toUnsignedLong(Streams.readInt(stream));
+                return new String(Streams.read(stream, (int)longSymbolLength), CHARSET_US_ASCII);
             default: return null;
         }
     }
