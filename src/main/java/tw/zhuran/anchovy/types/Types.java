@@ -10,6 +10,9 @@ import java.nio.charset.Charset;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
 
 public class Types {
@@ -40,6 +43,9 @@ public class Types {
     public static final byte FORMAT_CODE_STR32UTF8 = (byte)0xb1;
     public static final byte FORMAT_CODE_SYM8 = (byte)0xa3;
     public static final byte FORMAT_CODE_SYM32 = (byte)0xb3;
+    public static final byte FORMAT_CODE_LIST0 = (byte)0x45;
+    public static final byte FORMAT_CODE_LIST8 = (byte)0xc0;
+    public static final byte FORMAT_CODE_LIST32 = (byte)0xd0;
     public static final byte PAYLOAD_TRUE = 0x01;
     public static final byte PAYLOAD_FALSE = 0x00;
 
@@ -106,7 +112,51 @@ public class Types {
             case FORMAT_CODE_SYM32:
                 long longSymbolLength = Integer.toUnsignedLong(Streams.readInt(stream));
                 return new String(Streams.read(stream, (int)longSymbolLength), CHARSET_US_ASCII);
+            case FORMAT_CODE_LIST0:
+                return new ArrayList<Object>();
+            case FORMAT_CODE_LIST8:
+                return decodeList8(stream);
+            case FORMAT_CODE_LIST32:
+                return decodeList32(stream);
             default: return null;
         }
+    }
+
+    private static Object decodeList32(InputStream stream) throws IOException {
+        List<Object> result = new ArrayList<Object>();
+        int size = Streams.readInt(stream);
+        if (size == 0) {
+            return result;
+        }
+        int count = Streams.readInt(stream);
+        if (count == 0) {
+            return result;
+        }
+        byte[] content = Streams.read(stream, size - 4);
+        ByteArrayInputStream contentStream = new ByteArrayInputStream(content);
+        List list = new LinkedList();
+        for (int i = 0; i < count; i++) {
+            list.add(decode(contentStream));
+        }
+        return list;
+    }
+
+    private static Object decodeList8(InputStream stream) throws IOException {
+        List<Object> result = new ArrayList<Object>();
+        int size = Streams.read(stream);
+        if (size == 0) {
+            return result;
+        }
+        int count = Streams.read(stream);
+        if (count == 0) {
+            return result;
+        }
+        byte[] content = Streams.read(stream, size - 1);
+        ByteArrayInputStream contentStream = new ByteArrayInputStream(content);
+        List list = new ArrayList();
+        for (int i = 0; i < count; i++) {
+            list.add(decode(contentStream));
+        }
+        return list;
     }
 }

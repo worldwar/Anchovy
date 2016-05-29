@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import java.math.BigInteger;
 import java.time.*;
+import java.util.ArrayList;
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -169,5 +170,15 @@ public class TypesTest {
         assertThat(Types.decode(symbolBytes), is((Object) "fish"));
         symbolBytes = new byte[]{(byte) 0xb3, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x04, (byte)'f', (byte)'i', (byte)'s', (byte)'h'};
         assertThat(Types.decode(symbolBytes), is((Object) "fish"));
+    }
+
+    @Test
+    public void shouldDecodeListType() {
+        byte[] listBytes = new byte[]{(byte)0x45};
+        assertThat(Types.decode(listBytes), is((Object) new ArrayList<Object>()));
+        listBytes = new byte[]{(byte)0xc0, (byte)0x04, (byte)0x03, (byte)0x41, (byte)0x42, (byte)0x41};
+        assertThat(Types.decode(listBytes), is((Object) com.google.common.collect.Lists.newArrayList(true, false, true)));
+        listBytes = new byte[]{(byte)0xd0, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x0f, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x01, (byte) 0xb1, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x06, (byte)0xE6, (byte)0x9C, (byte)0xB1, (byte)0xE7, (byte)0x84, (byte)0xB6};
+        assertThat(Types.decode(listBytes), is((Object) com.google.common.collect.Lists.newArrayList("朱然")));
     }
 }
