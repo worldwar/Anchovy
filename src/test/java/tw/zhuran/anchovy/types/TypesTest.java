@@ -6,8 +6,7 @@ import org.junit.Test;
 
 import java.math.BigInteger;
 import java.time.*;
-import java.util.ArrayList;
-import java.util.UUID;
+import java.util.*;
 
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
@@ -180,5 +179,48 @@ public class TypesTest {
         assertThat(Types.decode(listBytes), is((Object) com.google.common.collect.Lists.newArrayList(true, false, true)));
         listBytes = new byte[]{(byte)0xd0, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x0f, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x01, (byte) 0xb1, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x06, (byte)0xE6, (byte)0x9C, (byte)0xB1, (byte)0xE7, (byte)0x84, (byte)0xB6};
         assertThat(Types.decode(listBytes), is((Object) com.google.common.collect.Lists.newArrayList("朱然")));
+    }
+
+    @Test
+    public void shouldDecodeMapType() {
+        byte[] mapBytes = new byte[]{(byte)0xc1, (byte)0x0f, (byte)0x01, (byte) 0xa3, (byte)0x04, (byte)'n', (byte)'a', (byte)'m', (byte)'e', (byte) 0xa1, (byte)0x06, (byte)0xE6, (byte)0x9C, (byte)0xB1, (byte)0xE7, (byte)0x84, (byte)0xB6};
+        Map<Object, Object> map = new LinkedHashMap<>();
+        map.put("name", "朱然");
+        assertMapThat((Map)Types.decode(mapBytes), map);
+        mapBytes = new byte[]{(byte)0xd1,
+                (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x19,
+                (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x02,
+                (byte) 0xa3, (byte) 0x04, (byte) 'n', (byte) 'a', (byte) 'm', (byte) 'e',
+                (byte) 0xa1, (byte) 0x06, (byte) 0xE6, (byte) 0x9C, (byte) 0xB1, (byte) 0xE7, (byte) 0x84, (byte) 0xB6,
+                (byte) 0xa3, (byte) 0x03, (byte) 'a', (byte) 'g', (byte) 'e',
+                (byte) 0x50, (byte) 0x1c
+        };
+        map = new LinkedHashMap<>();
+        map.put("name", "朱然");
+        map.put("age", 28);
+        assertMapThat((Map)Types.decode(mapBytes), map);
+    }
+
+    public void assertMapThat(Map a, Map b) {
+        assertThat(mapEquals(a, b), is(true));
+    }
+
+    boolean mapEquals(Map a, Map b) {
+        if (a == null) {
+            return b == null;
+        }
+        if (b == null) {
+            return false;
+        }
+        Iterator<Map.Entry> ai = a.entrySet().iterator();
+        Iterator<Map.Entry> bi = b.entrySet().iterator();
+        while (ai.hasNext() && bi.hasNext()) {
+            Map.Entry ae = ai.next();
+            Map.Entry be = bi.next();
+            if (!(ae.getKey().equals(be.getKey()) && ae.getValue().equals(be.getValue()))) {
+                return false;
+            }
+        }
+        return !(ai.hasNext() || bi.hasNext());
     }
 }
