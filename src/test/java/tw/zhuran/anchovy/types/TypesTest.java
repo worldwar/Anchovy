@@ -201,6 +201,25 @@ public class TypesTest {
         assertMapThat((Map)Types.decode(mapBytes), map);
     }
 
+    @Test
+    public void shouldDecodeArrayType() {
+        byte[] arrayBytes = new byte[]{(byte)0xe0,
+                (byte) 0x0b, (byte) 0x02,
+                (byte) 0xa3,
+                (byte) 0x04, (byte) 'n', (byte) 'a', (byte) 'm', (byte) 'e',
+                (byte) 0x03, (byte) 'a', (byte) 'g', (byte) 'e'
+        };
+        assertThat(Types.decode(arrayBytes), is((Object) com.google.common.collect.Lists.newArrayList("name", "age")));
+        arrayBytes = new byte[]{(byte)0xf0,
+                (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x0e,
+                (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x02,
+                (byte) 0xa3,
+                (byte) 0x04, (byte) 'n', (byte) 'a', (byte) 'm', (byte) 'e',
+                (byte) 0x03, (byte) 'a', (byte) 'g', (byte) 'e'
+        };
+        assertThat(Types.decode(arrayBytes), is((Object) com.google.common.collect.Lists.newArrayList("name", "age")));
+    }
+
     public void assertMapThat(Map a, Map b) {
         assertThat(mapEquals(a, b), is(true));
     }

@@ -45,6 +45,8 @@ public class Types {
     public static final byte FORMAT_CODE_LIST32 = (byte)0xd0;
     public static final byte FORMAT_CODE_MAP8 = (byte)0xc1;
     public static final byte FORMAT_CODE_MAP32 = (byte)0xd1;
+    public static final byte FORMAT_CODE_ARRAY8 = (byte)0xe0;
+    public static final byte FORMAT_CODE_ARRAY32 = (byte)0xf0;
     public static final byte PAYLOAD_TRUE = 0x01;
     public static final byte PAYLOAD_FALSE = 0x00;
 
@@ -64,8 +66,11 @@ public class Types {
     public static Object decode(InputStream stream) throws IOException {
         assert stream != null : "input of decode should not be null!";
         assert stream.available() != 0 : "input of decode should not be empty!";
+        return decodeConstructor(Streams.read(stream), stream);
+    }
 
-        switch (Streams.read(stream)) {
+    private static Object decodeConstructor(byte constructor, InputStream stream) throws IOException {
+        switch (constructor) {
             case FORMAT_CODE_NULL: return null;
             case FORMAT_CODE_BOOLEAN:
                 switch (stream.read()) {
@@ -121,8 +126,48 @@ public class Types {
                 return decodeMap8(stream);
             case FORMAT_CODE_MAP32:
                 return decodeMap32(stream);
+            case FORMAT_CODE_ARRAY8:
+                return decodeArray8(stream);
+            case FORMAT_CODE_ARRAY32:
+                return decodeArray32(stream);
             default: return null;
         }
+    }
+
+    private static Object decodeArray32(InputStream stream) throws IOException {
+        LinkedList<Object> result = new LinkedList<>();
+        int size = Streams.readInt(stream);
+        if (size == 0) {
+            return result;
+        }
+        int count = Streams.readInt(stream);
+        if (count == 0) {
+            return result;
+        }
+        byte[] content = Streams.read(stream, size - 4);
+        ByteArrayInputStream contentStream = new ByteArrayInputStream(content);
+        byte constructor = Streams.read(contentStream);
+        for (int i = 0; i < count; i++) {
+            result.add(decodeConstructor(constructor, contentStream));
+        }
+        return result;
+    }
+
+    private static Object decodeArray8(InputStream stream) throws IOException {
+        LinkedList<Object> result = new LinkedList<>();
+        int size =  Streams.read(stream);
+        if (size == 0) {
+            return result;
+        }
+        int count = Streams.read(stream);
+        if (count == 0) {
+            return result;
+        }
+        byte constructor = Streams.read(stream);
+        for (int i = 0; i < count; i++) {
+            result.add(decodeConstructor(constructor, stream));
+        }
+        return result;
     }
 
     private static Object decodeMap32(InputStream stream) throws IOException {
